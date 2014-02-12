@@ -94,26 +94,29 @@ let compilers_list = !compilers_list
 let current_filename = Filename.concat homedir ".ocaml/current.txt"
 
 let pwd = Unix.getcwd ()
-let find_up version_file =
-  let rec iter dirname =
-    let filename = Filename.concat dirname version_file in
-    match
-    if Sys.file_exists filename then
-      match File.lines_of_file filename with
-        version :: _ -> Some version
-      | _ -> None
-    else None
-    with None ->
+let find_up version_files =
+  let rec iter dirname files =
+    match files with
+    | [] ->
       let new_dirname = Filename.dirname dirname in
       if new_dirname = dirname then None else
-        iter new_dirname
-       | Some _ as v -> v
+        iter new_dirname version_files
+    | (version_file, prefix) :: next_files ->
+      let filename = Filename.concat dirname version_file in
+      match
+        if Sys.file_exists filename then
+          match File.lines_of_file filename with
+            version :: _ -> Some (prefix ^ version)
+          | _ -> None
+        else None
+      with None -> iter dirname next_files
+         | Some _ as v -> v
   in
   try
-    iter pwd
+    iter pwd version_files
   with e ->
-    Printf.eprintf "ocp-manager: Warning, exception %S while looking for %S\n%!"
-      (Printexc.to_string e) version_file;
+    Printf.eprintf "ocp-manager: Warning, exception %S while looking for per-project files\n%!"
+      (Printexc.to_string e);
     None
 
 let current_version =
@@ -121,23 +124,19 @@ let current_version =
     Sys.getenv "OCAML_VERSION"
   with Not_found ->
     match
-      find_up ".ocp-switch"
+      find_up [".ocp-switch", ""; ".opam-switch", "opam:" ]
     with Some version -> version
        | None ->
-         match
-           find_up ".opam-switch"
-         with Some version -> Printf.sprintf "opam:%s" version
-            | None ->
-              try
-                let ic = open_in current_filename in
-                try
-                  let line = input_line ic in
-                  close_in ic;
-                  line
-                with _ ->
-                  close_in ic;
-                  "distrib"
-              with _ -> "distrib"
+         try
+           let ic = open_in current_filename in
+           try
+             let line = input_line ic in
+             close_in ic;
+             line
+           with _ ->
+             close_in ic;
+             "distrib"
+         with _ -> "distrib"
 
 let compiler_bindir c =
   match c.compiler_kind with
