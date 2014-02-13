@@ -30,4 +30,4 @@ let arg_handler version force_arg =
 	compiler_prefix = prefix;
 	compiler_kind = OCAML_MANAGER prefix; (* NOT CORRECT, but not used *)
       };
-    ManagerSet.arg_handler version
+    ManagerSwitch.set_current_switch version

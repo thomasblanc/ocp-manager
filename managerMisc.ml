@@ -77,3 +77,22 @@ let copy src dst = (* copy_file *)
   close_in src;
   close_out dst
 
+
+
+let list_printer indent list =
+  let rec list_printer indent pos list =
+  match list with
+  | [] ->
+    Printf.printf "\n"
+  | s :: tail ->
+    let len = String.length s in
+    if pos + len > 78 then begin
+      Printf.printf "\n%s" indent;
+      list_printer indent (String.length indent) list
+    end else begin
+      Printf.printf "%s " s;
+      list_printer indent (pos + len + 1) tail
+    end
+  in
+  Printf.printf "%s" indent;
+  list_printer indent (String.length indent) list

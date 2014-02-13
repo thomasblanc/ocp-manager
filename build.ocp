@@ -5,24 +5,15 @@ begin program "ocp-manager"
 
    "managerBinaries.ml"
    "managerInit.ml"
-   "managerAddBinary.ml"
-   "managerList.ml"
-   "managerDirectory.ml"
-   "managerSet.ml"
+   "managerSwitch.ml"
+
    "managerTools.ml"
-   "managerMissing.ml"
    "managerCompile.ml"
    "managerConfig.ml"
 
    "managerRestore.ml"
 
    "managerMain.ml"
-
-(*
-   "managerManage.ml"
-   "managerInstall.ml"
-*)
-
   ]
   requires = [ "ocplib-lang" (* "opam-lib" *) "ocplib-system" ]
 end

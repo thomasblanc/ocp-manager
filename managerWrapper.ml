@@ -46,7 +46,8 @@ let path_sep = match Sys.os_type with
   | _ -> ':'
 
 let old_manager_roots_dir = Filename.concat homedir ".ocaml/roots"
-let manager_roots_dir = Filename.concat homedir ".ocp/manager-switches"
+let manager_roots_dir = Filename.concat ocpdir "manager-switches"
+let manager_defaults = Filename.concat ocpdir "manager-defaults"
 
 let compilers = ref StringMap.empty
 let compilers_list = ref []
@@ -154,7 +155,7 @@ let current_version =
          with _ -> "distrib"
 
 
-let compiler_bindir c basename =
+let compiler_bindir c =
   match c.compiler_kind with
   | DISTRIBUTION ->
     let path = OcpString.split path path_sep in
@@ -165,7 +166,7 @@ let compiler_bindir c basename =
         if bindir = manager_bindir then
           iter next_path
         else
-        if Sys.file_exists (Filename.concat bindir basename) then
+        if Sys.file_exists (Filename.concat bindir "ocamlc") then
           bindir
         else
           iter next_path
@@ -176,7 +177,7 @@ let compiler_bindir c basename =
 
 let compiler_prefix c =
     match c.compiler_kind with
-      DISTRIBUTION -> Filename.dirname (compiler_bindir c "ocamlc")
+      DISTRIBUTION -> Filename.dirname (compiler_bindir c)
     | OPAM_COMPILER _
     | OCAML_MANAGER _
       -> c.compiler_prefix
@@ -208,8 +209,6 @@ let get_current_compiler () =
 let _ =
   if not (OcpString.starts_with basename "ocp-manager") then
     let c = get_current_compiler () in
-    let dirname = compiler_bindir c basename in
-    let filename = Filename.concat dirname basename in
     let argv = Sys.argv in
     let nargs = Array.length argv in
     let libdir = compiler_libdir c in
@@ -217,43 +216,49 @@ let _ =
       if basename = "ocaml" then
         match c.compiler_kind with
           OPAM_COMPILER (_, alias) ->
-            Array.concat [
-              [| argv.(0) |];
-              [| "-I"; Filename.concat libdir "toplevel" |];
-              Array.sub argv 1 (nargs - 1)
-            ]
+          Array.concat [
+            [| argv.(0) |];
+            [| "-I"; Filename.concat libdir "toplevel" |];
+            Array.sub argv 1 (nargs - 1)
+          ]
         | _ -> argv
-          else argv
+      else argv
     in
     begin
       match c.compiler_kind with
-          OPAM_COMPILER _ ->
-	    putenv "CAML_LD_LIBRARY_PATH" (Filename.concat libdir "stublibs")
-	| _ -> ()
+        OPAM_COMPILER _ ->
+	putenv "CAML_LD_LIBRARY_PATH" (Filename.concat libdir "stublibs")
+      | _ -> ()
     end;
-    if Sys.file_exists filename then begin
-      Sys.argv.(0) <- filename;
-	(try execv Sys.argv.(0) argv with
-            e ->
-	      Printf.fprintf stderr "Error \"%s\" executing %s\n%!"
-                (Printexc.to_string e) Sys.argv.(0);
-              exit 2
-        )
-    end else begin
-      Printf.fprintf stderr "Error: %s does not exist\n%!" filename;
-      let alternatives = compilers_list in
-      let versions = ref [] in
-      List.iter (fun c ->
-        let exec_name = Filename.concat (compiler_bindir c basename) basename in
-        if Sys.file_exists exec_name then
-          versions := c :: !versions) alternatives;
-      let versions = List.sort compare !versions in
-      if versions = [] then
-        Printf.fprintf stderr "This executable is not available in any version\n%!"
-      else begin
-        Printf.fprintf stderr "This executable is only available in the following versions:\n";
-        List.iter (fun c -> Printf.fprintf stderr " %s" c.compiler_name) versions;
-        Printf.fprintf stderr "\n%!";
-      end;
-      exit 2
-    end
+    let dirname = compiler_bindir c in
+    let filename =
+      let filename = Filename.concat dirname basename in
+      if Sys.file_exists filename then filename else
+        let filename = Filename.concat manager_defaults basename in
+        if Sys.file_exists filename then filename else
+          begin
+            Printf.fprintf stderr "Error: %s does not exist\n%!" filename;
+            let alternatives = compilers_list in
+            let versions = ref [] in
+            List.iter (fun c ->
+              let exec_name = Filename.concat (compiler_bindir c) basename in
+              if Sys.file_exists exec_name then
+                versions := c :: !versions) alternatives;
+            let versions = List.sort compare !versions in
+            if versions = [] then
+              Printf.fprintf stderr "This executable is not available in any version\n%!"
+            else begin
+              Printf.fprintf stderr "This executable is only available in the following versions:\n";
+              List.iter (fun c -> Printf.fprintf stderr " %s" c.compiler_name) versions;
+              Printf.fprintf stderr "\n%!";
+            end;
+            exit 2
+          end
+    in
+    Sys.argv.(0) <- filename;
+    (try execv Sys.argv.(0) argv with
+       e ->
+       Printf.fprintf stderr "Error \"%s\" executing %s\n%!"
+         (Printexc.to_string e) Sys.argv.(0);
+       exit 2
+    )

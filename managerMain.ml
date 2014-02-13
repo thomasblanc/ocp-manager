@@ -6,57 +6,55 @@ let ok () = something_done := true
 
 let force_arg = ref false
 
-let arg_list = [
+let arg_list = Arg.align [
   "-list", Arg.Unit (fun _ ->
-    ManagerList.arg_handler ();
-    ok ()), " : list available switches";
+    ManagerSwitch.list_switches ();
+    ok ()), " List available switches";
   "-set", Arg.String (fun s ->
-    ManagerSet.arg_handler s;
-    ok ()), " <name> : set current switch";
+    ManagerSwitch.set_current_switch s;
+    ok ()), "SWITCH Set current switch";
   "-dir", Arg.String (fun s ->
-    ManagerDirectory.arg_handler s;
-    ok ()), " KIND : echo current directory for KIND (bin,lib,prefix)";
+    ManagerSwitch.print_directory s;
+    ok ()), "KIND Echo current directory for KIND (bin,lib,prefix)";
   "-config", Arg.Unit (fun _ ->
     ManagerConfig.arg_handler ();
-    ok ()), " : shell config for using ocp-manager wrappers";
+    ok ()), " Shell config for using ocp-manager wrappers";
 
   "-tools", Arg.Unit (fun _ ->
-    ManagerTools.arg_handler ();
-    ok ()), " : list available ocaml tools";
-  "-missing", Arg.Unit (fun _ ->
-    ManagerMissing.arg_handler ();
-    ok ()), " : list missing tools";
+    ManagerTools.print_commands ();
+    ok ()), " List available ocaml tools";
+  "-missing-tools", Arg.Unit (fun _ ->
+    ManagerTools.print_missing ();
+    ok ()), " List missing tools";
+  "-add-tool", Arg.String (fun s ->
+    ManagerTools.add_command s;
+    ok ()), "CMD Manage this command from now on";
+  "-remove-tool", Arg.String (fun s ->
+    ManagerTools.remove_command s;
+    ok ()), "CMD Remove this command from managed tools";
+  "-add-all", Arg.Unit (fun s ->
+    ManagerTools.add_all_commands ();
+    ok ()), " Manage all commands from the switch from now on";
+
+  "-add-default", Arg.String (fun s ->
+    ManagerTools.add_default_command s;
+    ok ()), "CMD Set this executable as the default for this command";
+  "-remove-default", Arg.String (fun s ->
+    ManagerTools.remove_default s;
+    ok ()), "CMD Remove this command from default";
+
+
   "-compile", Arg.String (fun s ->
     ManagerCompile.arg_handler s !force_arg;
-    ok ()), " <name> : compile ocaml distribution in current directory";
-  "-add", Arg.String (fun s ->
-    ManagerAddBinary.arg_handler s;
-    ok ()), " <exec> : manage this executable from now on";
+    ok ()), "SWITCH Compile ocaml distribution in current directory as SWITCH";
 
   "-restore", Arg.Unit (fun _ ->
     ManagerRestore.arg_handler ();
-    ok ()), " : restore computer distribution";
+    ok ()), " Restore computer distribution";
 
-(*
-  "-install", Arg.Unit (fun _ ->
-    ManagerInstall.arg_handler ();
-    ok ()), " : install ocp-manager";
-  "-manage", Arg.Unit (fun _ ->
-    ManagerManage.arg_handler ();
-    ok ()), " : take control over computer distribution";
-  "-update", Arg.Unit (fun _ ->
-    ManagerRestore.arg_handler ();
-    ManagerManage.arg_handler ();
-    ok ()), " : apply a new binaries list";
-  "-add", Arg.String (fun s ->
-    ManagerRestore.arg_handler ();
-    let binaries = load_binaries () in
-    let binaries = s :: binaries in
-    save_binaries binaries;
-    ManagerManage.arg_handler ();
-    ok ()
-  ), " <name> : add an executable to binaries";
-*)
+  "-force-update", Arg.Unit (fun _ ->
+    ManagerInit.auto_update ();
+    ok ()), " Force auto-update with this binary";
 
   "-f", Arg.Set force_arg, " force when possible";
 

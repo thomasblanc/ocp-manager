@@ -27,11 +27,13 @@ val get_current_compiler_opt : unit -> compiler option
 val compilers_list : compiler list
 val compilers : compiler StringMap.t
 
-val compiler_bindir : compiler -> string -> string
+val compiler_bindir : compiler -> string
 val compiler_libdir : compiler -> string
 val compiler_prefix : compiler -> string
 
 val add_compiler : compiler -> unit
 
 val manager_roots_dir : string
+val pwd : string
+val manager_defaults : string
 
