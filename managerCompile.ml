@@ -1,17 +1,18 @@
 open ManagerMisc
+open ManagerWrapper
 open ManagerInit
 
 let command cmd =
   let x = Sys.command cmd in
   if x <> 0 then exit x
 
-let arg_handler version =
+let arg_handler version force_arg =
   try
-    let c = Hashtbl.find compilers version in
+    let c = StringMap.find version compilers in
     if c.compiler_name <> version then raise Not_found;
     Printf.fprintf stderr
       "Version [%s] is already present among alternatives\n%!" version;
-    if !force_arg then raise Not_found;
+    if force_arg then raise Not_found;
     exit 2
   with Not_found ->
     let prefix = Filename.concat manager_roots_dir version in
@@ -23,7 +24,7 @@ let arg_handler version =
     command "make world opt opt.opt";
     command "make install";
     Printf.printf "Compilation OK. Setting new version\n%!";
-    ManagerInit.add_compiler
+    ManagerWrapper.add_compiler
       {
 	compiler_name = version;
 	compiler_prefix = prefix;

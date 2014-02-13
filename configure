@@ -1,0 +1,5 @@
+#!/bin/sh
+
+echo "OBUILD=./_obuild" > Makefile.config
+echo "BINDIR=/usr/local/bin" >> Makefile.config
+ocp-build init

@@ -1,9 +1,10 @@
 open ManagerMisc
+open ManagerWrapper
 open ManagerInit
 
 let arg_handler version =
   try
-    let c = Hashtbl.find compilers version in
+    let c = StringMap.find version compilers in
     let oc = open_out current_filename in
     output_string oc c.compiler_name;
     output_char oc '\n';

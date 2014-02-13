@@ -1,5 +1,38 @@
 open ManagerMisc
+open ManagerWrapper
 open ManagerInit
+
+
+let install_prefix = "/usr/"
+let libdir = Filename.concat install_prefix "lib/ocp-manager"
+let bindir = Filename.concat install_prefix "bin"
+let distrib_dir = Filename.concat libdir "distrib"
+
+let list_of_binaries_filename = Filename.concat libdir "binaries.txt"
+let manager_binary_filename = Filename.concat libdir basename
+
+let load_binaries () =
+  ManagerMisc.lines_of_file list_of_binaries_filename
+
+let save_binaries binaries =
+  let oc = open_out list_of_binaries_filename in
+  List.iter (fun s -> Printf.fprintf oc "%s\n" s) binaries;
+  close_out oc
+
+let manage_binary binary =
+  let binary_filename = Filename.concat bindir binary in
+  if Sys.file_exists binary_filename then begin
+    Printf.fprintf stderr "Saving executable %s to %s\n%!"
+      binary_filename (Filename.concat distrib_dir binary);
+    Sys.rename binary_filename (Filename.concat distrib_dir binary);
+  end;
+
+  if not (Sys.file_exists binary_filename) then begin
+    Printf.fprintf stderr "Creating stub executable %s\n%!" binary_filename;
+    symlink "ocp-manager" binary_filename;
+  end;
+  Printf.fprintf stderr "%s is now managed\n%!" binary
+
 
 let arg_handler () =
   if not (Sys.file_exists distrib_dir) then begin

@@ -1,4 +1,5 @@
 open ManagerMisc
+open ManagerWrapper
 open ManagerInit
 
 let print_current_version msg =
@@ -6,7 +7,7 @@ let print_current_version msg =
   begin
     match get_current_compiler_opt () with
     | Some c ->
-      Printf.printf "\tbinaries in %S\n" (compiler_bindir c)
+      Printf.printf "\tbinaries in %S\n" (compiler_bindir c "ocamlc")
     | None ->
       Printf.printf "\tWarning: could not find binaries of %S\n" current_version
   end

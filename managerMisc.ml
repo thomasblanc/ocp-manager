@@ -1,6 +1,17 @@
 module MinUnix = Unix
 module OnlyUnix = Unix
 
+let putenv = MinUnix.putenv
+let execv = MinUnix.execv
+let chmod = MinUnix.chmod
+
+let rec safe_mkdir dirname =
+  if not (Sys.file_exists dirname) then begin
+    safe_mkdir (Filename.dirname dirname);
+    MinUnix.mkdir dirname 0o755;
+  end
+let symlink = OnlyUnix.symlink
+
 let before s pos = String.sub s 0 pos
 let after s pos =
   let len = String.length s in
@@ -13,11 +24,14 @@ let cut_at s c =
       after s (pos+1);
     with _ -> s, ""
 
-let is_directory filename =
-  (MinUnix.lstat filename).MinUnix.st_kind = MinUnix.S_DIR
+let is_directory filename = Sys.is_directory filename
+(*  (MinUnix.lstat filename).MinUnix.st_kind = MinUnix.S_DIR *)
 
 
 let list_directory dirname =
+  List.sort compare (Array.to_list (Sys.readdir dirname))
+
+(*
   let list = ref [] in
   let dir = OnlyUnix.opendir dirname in
     try
@@ -30,6 +44,7 @@ let list_directory dirname =
     with End_of_file ->
       OnlyUnix.closedir dir;
       List.sort compare !list
+*)
 
 let lines_of_file filename =
   let lines = ref [] in

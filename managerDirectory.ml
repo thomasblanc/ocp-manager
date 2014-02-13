@@ -1,4 +1,5 @@
 open ManagerMisc
+open ManagerWrapper
 open ManagerInit
 
 let arg_handler s =
@@ -6,7 +7,7 @@ let arg_handler s =
   Printf.printf "%s\n%!"
     (
       match s with
-          "bin" -> compiler_bindir c
+          "bin" -> compiler_bindir c "ocamlc"
         | "prefix" -> compiler_prefix c
         | "lib" -> compiler_libdir c
         | _ -> failwith "bad dir kind"

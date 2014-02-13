@@ -1,18 +1,28 @@
 begin program "ocp-manager"
   files = [
    "managerMisc.ml"
+   "managerWrapper.ml"
+
+   "managerBinaries.ml"
    "managerInit.ml"
-   "managerInstall.ml"
    "managerAddBinary.ml"
-   "managerRestore.ml"
-   "managerManage.ml"
    "managerList.ml"
    "managerDirectory.ml"
    "managerSet.ml"
    "managerTools.ml"
    "managerMissing.ml"
    "managerCompile.ml"
+   "managerConfig.ml"
+
+   "managerRestore.ml"
+
    "managerMain.ml"
+
+(*
+   "managerManage.ml"
+   "managerInstall.ml"
+*)
+
   ]
   requires = [ "ocplib-lang" (* "opam-lib" *) "ocplib-system" ]
 end

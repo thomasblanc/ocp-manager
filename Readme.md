@@ -3,7 +3,7 @@
 ocp-manager is a tool to manage several versions of OCaml on the same
 computer.
 
-## Compilation
+## Compilation and Installation
 
 You need 'ocp-build' installed on your computer:
 
@@ -11,42 +11,28 @@ You need 'ocp-build' installed on your computer:
 
 Now, you can compile `ocp-manager`:
 
-    ocp-build init
-    ocp-build ocp-manager
+    ./configure
+    make
+    make install
 
-## Requirements
+You need to configure your PATH variable. You can add in your ~/bashrc (or
+  whatever configure file for your shell):
 
-- default ocaml binaries should be in /usr/bin/
+    eval `ocp-manager -config`
 
-## Installation
+## How to update
 
-- Create your directory ~/.ocaml/roots:
+If you have a version of 'ocp-manager' before Feb 13. 2014, you should
+restore what it might have changed:
 
-     mkdir -p ~/.ocaml/roots
-
-- In the directory containing a copy of "ocp-manager" and of
- "binaries.txt" (the list of tools managed by ocp-manager), call:
-
-     sudo ocp-manager -install
-
-  This will copy ocp-manager as /usr/bin/ocp-manager, and a directory
-   /usr/lib/ocp-manager/.
-
-- Now, call:
-
-     sudo ocp-manager -manage
-
-  This will move the files listed in binaries.txt into
-   /usr/lib/ocp-manager/distrib/, and create links to /usr/bin/ocp-manager
-   stubs at their place in /usr/bin/. Now, all the tools listed in
-   binaries.txt are managed by ocp-manager.
+   ocp-manager -restore
 
 ## Usage
 
 Use 'ocp-manager -list' to see the list of available versions.
 
 To add a new version in the list, you just need to install a version of OCaml
-in $HOME/.ocaml/roots/ocaml-$VERSION/{bin,lib,man}. You can use
+in $HOME/.ocp/manager-switches/ocaml-$VERSION/{bin,lib,man}. You can use
 'ocp-manager -compile SOME-VERSION' in the sources of OCaml to compile
 and install a new version of OCaml, called SOME-VERSION in the list.
 
