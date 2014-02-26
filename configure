@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VERSION=0.1
+VERSION=0.1.1
 
 PREFIX=/usr/local
 
@@ -28,4 +28,4 @@ echo "command=\"ocp-manager\"" >> build.ocp
 echo "release_date=\"2014-02-26\"" >> build.ocp
 cat build.ocp.in >> build.ocp
 
-ocp-build init
+ocp-build -init

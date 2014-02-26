@@ -21,6 +21,11 @@ install: ocp-manager.1
 install.user:
 	$(OBUILD)/ocp-manager/ocp-manager.asm
 
+install.opam: ocp-manager.1
+	mkdir -k $(MANDIR)/man1
+	cp ocp-manager.1 $(MANDIR)/man1/ocp-manager.1
+
+OPAMER=ocp-opamer
 TOOL=ocp-manager
 OPAM_PACKAGE=distrib/opam
 
