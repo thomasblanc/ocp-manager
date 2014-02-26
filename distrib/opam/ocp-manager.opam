@@ -1,0 +1,10 @@
+opam-version: "1"
+maintainer: "Fabrice Le Fessant <fabrice.le_fessant@ocamlpro.com>"
+build: [
+  [ "./configure"  ]
+  [ make ]
+  [ make "install.user" ]
+]
+remove: []
+depends: [ "ocp-build" ]
+
