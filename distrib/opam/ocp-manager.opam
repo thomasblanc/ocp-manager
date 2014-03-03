@@ -5,6 +5,9 @@ build: [
   [ make ]
   [ make "install.opam" ]
 ]
-remove: []
+remove: [
+  [ "rm" "-f" "%{prefix}%/ocp-manager" ]
+  [ "rm" "-f" "%{prefix}%/man/man1/ocp-manager.1" ]
+]
 depends: [ "ocp-build" ]
 

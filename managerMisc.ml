@@ -1,6 +1,8 @@
 module MinUnix = Unix
 module OnlyUnix = Unix
 
+module StringMap = Map.Make(String)
+
 let putenv = MinUnix.putenv
 let execv = MinUnix.execv
 let chmod = MinUnix.chmod
@@ -77,6 +79,16 @@ let copy src dst = (* copy_file *)
   close_in src;
   close_out dst
 
+
+let skip_chars s cs =
+  let rec iter s cs i len=
+    if i = len then "" else
+    if String.contains cs s.[i] then
+      iter s cs (i+1) len
+    else
+      String.sub s i (len-i)
+  in
+  iter s cs 0 (String.length s)
 
 
 let list_printer indent list =

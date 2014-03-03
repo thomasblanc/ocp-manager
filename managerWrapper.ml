@@ -227,7 +227,8 @@ let _ =
     begin
       match c.compiler_kind with
         OPAM_COMPILER _ ->
-	putenv "CAML_LD_LIBRARY_PATH" (Filename.concat libdir "stublibs")
+	putenv "CAML_LD_LIBRARY_PATH"
+            (Printf.sprintf "%s/stublibs:%s/ocaml/stublibs" libdir libdir)
       | _ -> ()
     end;
     let dirname = compiler_bindir c in

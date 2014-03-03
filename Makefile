@@ -4,12 +4,12 @@ include Makefile.config
 all:
 	ocp-build
 
-ocp-manager.1:
+ocp-manager.1: $(OBUILD)/ocp-manager/ocp-manager.asm
 	$(OBUILD)/ocp-manager/ocp-manager.asm -man > ocp-manager.1
 
 install: ocp-manager.1
 	cp $(OBUILD)/ocp-manager/ocp-manager.asm $(BINDIR)/ocp-manager	
-	mkdir -k $(MANDIR)/man1
+	mkdir -p $(MANDIR)/man1
 	cp ocp-manager.1 $(MANDIR)/man1/ocp-manager.1
 	ocp-manager -list
 	@echo 
@@ -22,7 +22,8 @@ install.user:
 	$(OBUILD)/ocp-manager/ocp-manager.asm
 
 install.opam: ocp-manager.1
-	mkdir -k $(MANDIR)/man1
+	mkdir -p $(MANDIR)/man1
+	cp $(OBUILD)/ocp-manager/ocp-manager.asm $(BINDIR)/ocp-manager	
 	cp ocp-manager.1 $(MANDIR)/man1/ocp-manager.1
 
 OPAMER=ocp-opamer

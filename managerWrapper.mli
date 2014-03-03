@@ -1,4 +1,4 @@
-
+open ManagerMisc
 
 type compiler_kind =
   DISTRIBUTION
