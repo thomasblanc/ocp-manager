@@ -30,7 +30,7 @@ let arg_usage =
     "";
     "See the manpage for deeper information on how to use";
     "ocp-manager.";
-
+    "";
     "Available options are:";
   ]
 

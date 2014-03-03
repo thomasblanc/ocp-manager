@@ -1,4 +1,4 @@
-version="0.1.1"
+version="0.1.2"
 command="ocp-manager"
 release_date="2014-02-26"
 (* This file is prefixed with configure variables by ./configure *)

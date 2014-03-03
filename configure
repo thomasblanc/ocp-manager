@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VERSION=0.1.1
+VERSION=`cat VERSION`
 
 PREFIX=/usr/local
 
