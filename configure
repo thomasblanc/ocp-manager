@@ -3,11 +3,29 @@
 VERSION=`cat VERSION`
 
 PREFIX=/usr/local
+BINDIR2=
+MANDIR2=
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --prefix|-prefix)
       PREFIX="$2"
+      shift
+      shift
+      ;;
+    --bindir|-bindir)
+      BINDIR2="$2"
+      shift
+      shift
+      ;;
+    --mandir|-mandir)
+      MANDIR2="$2"
+      shift
+      shift
+      ;;
+    --obuild)
+      NO_INIT=yes
+      OBUILD="$2"
       shift
       shift
       ;;
@@ -17,10 +35,25 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
+if [ -z "$BINDIR2" ]; then
+BINDIR=$PREFIX/bin
+else
+BINDIR=$BINDIR2
+fi
 
-echo "OBUILD=./_obuild" > Makefile.config
-echo "BINDIR=$PREFIX/bin" >> Makefile.config
-echo "MANDIR=$PREFIX/man" >> Makefile.config
+if [ -z "$MANDIR2" ]; then
+MANDIR=$PREFIX/man
+else
+MANDIR=$MANDIR2
+fi
+
+if [ -z "$OBUILD" ]; then
+OBUILD=./_obuild
+fi
+
+echo "OBUILD=$OBUILD" > Makefile.config
+echo "BINDIR=$BINDIR" >> Makefile.config
+echo "MANDIR=$MANDIR" >> Makefile.config
 echo "VERSION=$VERSION" >> Makefile.config
 
 echo "version=\"$VERSION\"" > build.ocp
@@ -28,4 +61,6 @@ echo "command=\"ocp-manager\"" >> build.ocp
 echo "release_date=\"2014-02-26\"" >> build.ocp
 cat build.ocp.in >> build.ocp
 
-ocp-build -init
+if [ -z "$NO_INIT" ]; then
+  ocp-build -init
+fi

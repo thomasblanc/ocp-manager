@@ -5,6 +5,7 @@ module StringMap = Map.Make(String)
 
 let putenv = MinUnix.putenv
 let execv = MinUnix.execv
+let execve = MinUnix.execve
 let chmod = MinUnix.chmod
 
 let rec safe_mkdir dirname =
@@ -108,3 +109,29 @@ let list_printer indent list =
   in
   Printf.printf "%s" indent;
   list_printer indent (String.length indent) list
+
+(*
+let get_stdout_lines cmd args =
+  let temp_file = Filename.temp_file "ocp-build-" ".out" in
+  let new_stdout = Unix.openfile temp_file
+      [ Unix.O_WRONLY; Unix.O_CREAT; Unix.O_TRUNC ] 0o644 in
+  let pid = Unix.create_process cmd args Unix.stdin new_stdout Unix.stderr in
+  Unix.close new_stdout;
+  let status = Unix.waitpid [] pid in
+  let lines = ref [] in
+  begin try
+	  let ic = open_in temp_file in
+	  begin
+
+	    try
+	      while true do
+		lines := (input_line ic) :: !lines
+	      done
+	    with _ -> ()
+	  end;
+	  close_in ic;
+	  Sys.remove temp_file;
+    with _ -> ()
+  end;
+  (status, List.rev !lines)
+*)

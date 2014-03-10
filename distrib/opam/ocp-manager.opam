@@ -9,5 +9,5 @@ remove: [
   [ "rm" "-f" "%{prefix}%/ocp-manager" ]
   [ "rm" "-f" "%{prefix}%/man/man1/ocp-manager.1" ]
 ]
-depends: [ "ocp-build" ]
+depends: [ "ocp-build" {>= "1.99.6" } ]
 

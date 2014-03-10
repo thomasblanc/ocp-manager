@@ -242,6 +242,19 @@ let _ =
         ManagerInit.auto_update ();
         ok ()), " Force auto-update with this binary";
 
+      "-version", Arg.Unit (fun () ->
+        Printf.printf "%s\n%!" ManagerVersion.version;
+        exit 0;
+      ), " Print version and exit";
+
+      "-v", Arg.Unit (fun () ->
+        Printf.printf "ocp-manager, version %s\n" ManagerVersion.version;
+        Printf.printf "Author: Fabrice Le Fessant <fabrice.le_fessant@inria.fr>\n";
+        Printf.printf "Maintained by: OCamlPro SAS\n";
+        Printf.printf "Bug-tracker: https://github.com/OCamlPro/ocp-manager/issues\n%!";
+        exit 0;
+      ), " Print version and exit";
+
       "-f", Arg.Set force_arg, " force when possible";
       "-man", Arg.Unit gen_manpage, " Print Manpage to stdout";
     ]

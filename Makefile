@@ -8,13 +8,13 @@ ocp-manager.1: $(OBUILD)/ocp-manager/ocp-manager.asm
 	$(OBUILD)/ocp-manager/ocp-manager.asm -man > ocp-manager.1
 
 install: ocp-manager.1
-	cp $(OBUILD)/ocp-manager/ocp-manager.asm $(BINDIR)/ocp-manager	
+	cp $(OBUILD)/ocp-manager/ocp-manager.asm $(BINDIR)/ocp-manager
 	mkdir -p $(MANDIR)/man1
 	cp ocp-manager.1 $(MANDIR)/man1/ocp-manager.1
 	ocp-manager -list
-	@echo 
+	@echo
 	@echo "Don't forget to update your configuration files with"
-	@echo 
+	@echo
 	@echo '    eval `ocp-manager -config`'
 	@echo
 
@@ -23,7 +23,7 @@ install.user:
 
 install.opam: ocp-manager.1
 	mkdir -p $(MANDIR)/man1
-	cp $(OBUILD)/ocp-manager/ocp-manager.asm $(BINDIR)/ocp-manager	
+	cp $(OBUILD)/ocp-manager/ocp-manager.asm $(BINDIR)/ocp-manager
 	cp ocp-manager.1 $(MANDIR)/man1/ocp-manager.1
 
 OPAMER=ocp-opamer
@@ -44,7 +44,7 @@ opam.man:
 	@echo '(4) tag: make force_tag'
 	@echo '(5) create the corresponding opam: make opamize'
 
-opamize: 
+opamize:
 	$(OPAMER) \
 	 	-descr $(OPAM_PACKAGE)/$(TOOL).descr \
 		-opam $(OPAM_PACKAGE)/$(TOOL).opam  \

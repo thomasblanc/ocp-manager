@@ -33,8 +33,18 @@ type compiler = {
   compiler_prefix : string;
 }
 
+(*
+let environ = ref StringMap.empty
 
-let basename = Filename.basename Sys.argv.(0)
+let _ =
+  Array.iter (fun s ->
+      let (var, _) = OcpString.cut_at s '=' in
+      environ := StringMap.add var s !environ
+    ) (Unix.environment ())
+
+let putenv var v =
+  environ := StringMap.add var (Printf.sprintf "%s=%s" var v) !environ
+*)
 
 let homedir = Sys.getenv "HOME"
 let path = Sys.getenv "PATH"
@@ -107,7 +117,8 @@ let compilers_list = !compilers_list
 let compilers = !compilers
 
 
-let current_filename = Filename.concat homedir ".ocaml/current.txt"
+let current_filename = Filename.concat ocpdir "manager-current.txt"
+let distrib_filename = Filename.concat ocpdir "manager-distrib.txt"
 
 let pwd = Sys.getcwd ()
 let find_up version_files =
@@ -121,9 +132,7 @@ let find_up version_files =
       let filename = Filename.concat dirname version_file in
       match
         if Sys.file_exists filename then
-          match File.lines_of_file filename with
-            version :: _ -> Some (prefix ^ version)
-          | _ -> None
+          prefix filename
         else None
       with None -> iter dirname next_files
          | Some _ as v -> v
@@ -135,12 +144,18 @@ let find_up version_files =
       (Printexc.to_string e);
     None
 
+let get_version_of_file prefix filename =
+  match File.lines_of_file filename with
+    version :: _ -> Some (prefix ^ version)
+  | _ -> None
+
 let current_version =
   try
     Sys.getenv "OCAML_VERSION"
   with Not_found ->
     match
-      find_up [".ocp-switch", ""; ".opam-switch", "opam:" ]
+      find_up [".ocp-switch", get_version_of_file "";
+               ".opam-switch", get_version_of_file "opam:" ]
     with Some version -> version
        | None ->
          try
@@ -154,24 +169,28 @@ let current_version =
              "distrib"
          with _ -> "distrib"
 
+let find_bindir exe =
+  let path = OcpString.split path path_sep in
+  let rec iter path =
+    match path with
+      [] -> None
+    | bindir :: next_path ->
+      if bindir = manager_bindir then
+        iter next_path
+      else
+      if Sys.file_exists (Filename.concat bindir exe) then
+        Some bindir
+      else
+        iter next_path
+  in
+  iter path
 
 let compiler_bindir c =
   match c.compiler_kind with
-  | DISTRIBUTION ->
-    let path = OcpString.split path path_sep in
-    let rec iter path =
-      match path with
-        [] -> "/usr/bin"
-      | bindir :: next_path ->
-        if bindir = manager_bindir then
-          iter next_path
-        else
-        if Sys.file_exists (Filename.concat bindir "ocamlc") then
-          bindir
-        else
-          iter next_path
-    in
-    iter path
+  | DISTRIBUTION -> begin match find_bindir "ocamlc" with
+        None -> "/usr/bin"
+      | Some bindir -> bindir
+    end
   | OPAM_COMPILER _ | OCAML_MANAGER _ ->
     Filename.concat c.compiler_prefix "bin"
 
@@ -206,16 +225,30 @@ let get_current_compiler () =
       current_version;
     exit 2
 
+let basename = Filename.basename Sys.argv.(0)
+let is_ocpmanager =
+  OcpString.starts_with basename "ocp-manager"
+
+let is_exec =
+  let nargs = Array.length Sys.argv in
+  if is_ocpmanager then
+    if nargs > 2 && Sys.argv.(1) = "-exec" then
+      Some (Array.sub Sys.argv 2 (nargs - 2))
+    else None
+  else Some Sys.argv
+
 let _ =
-  if not (OcpString.starts_with basename "ocp-manager") then
+  match is_exec with
+  | None -> ()
+  | Some argv ->
     let c = get_current_compiler () in
-    let argv = Sys.argv in
     let nargs = Array.length argv in
-    let libdir = compiler_libdir c in
+    let basename = Filename.basename argv.(0) in
     let argv =
       if basename = "ocaml" then
         match c.compiler_kind with
           OPAM_COMPILER (_, alias) ->
+          let libdir = compiler_libdir c in
           Array.concat [
             [| argv.(0) |];
             [| "-I"; Filename.concat libdir "toplevel" |];
@@ -224,42 +257,105 @@ let _ =
         | _ -> argv
       else argv
     in
-    begin
-      match c.compiler_kind with
-        OPAM_COMPILER _ ->
-	putenv "CAML_LD_LIBRARY_PATH"
-            (Printf.sprintf "%s/stublibs:%s/ocaml/stublibs" libdir libdir)
-      | _ -> ()
-    end;
     let dirname = compiler_bindir c in
     let filename =
       let filename = Filename.concat dirname basename in
       if Sys.file_exists filename then filename else
-        let filename = Filename.concat manager_defaults basename in
-        if Sys.file_exists filename then filename else
-          begin
-            Printf.fprintf stderr "Error: %s does not exist\n%!" filename;
-            let alternatives = compilers_list in
-            let versions = ref [] in
-            List.iter (fun c ->
-              let exec_name = Filename.concat (compiler_bindir c) basename in
-              if Sys.file_exists exec_name then
-                versions := c :: !versions) alternatives;
-            let versions = List.sort compare !versions in
-            if versions = [] then
-              Printf.fprintf stderr "This executable is not available in any version\n%!"
-            else begin
-              Printf.fprintf stderr "This executable is only available in the following versions:\n";
-              List.iter (fun c -> Printf.fprintf stderr " %s" c.compiler_name) versions;
-              Printf.fprintf stderr "\n%!";
-            end;
-            exit 2
-          end
+        match
+          match c.compiler_kind with
+            OPAM_COMPILER ("system", _) ->
+            begin match find_bindir "ocamlc" with
+              | None -> None
+              | Some dirname ->
+                let filename = Filename.concat dirname basename in
+                if Sys.file_exists filename then Some filename else None
+            end
+          | _ -> None
+        with
+        | Some filename -> filename
+        | None ->
+          let filename = Filename.concat manager_defaults basename in
+          if Sys.file_exists filename then filename else
+            match
+              if is_ocpmanager then
+                find_bindir basename
+              else None
+            with
+            | Some bindir -> Filename.concat bindir basename
+            | None ->
+              begin
+                Printf.fprintf stderr "Error: %s does not exist\n%!" filename;
+                let alternatives = compilers_list in
+                let versions = ref [] in
+                List.iter (fun c ->
+                    let exec_name = Filename.concat (compiler_bindir c) basename in
+                    if Sys.file_exists exec_name then
+                      versions := c :: !versions) alternatives;
+                let versions = List.sort compare !versions in
+                if versions = [] then
+                  Printf.fprintf stderr "This executable is not available in any version\n%!"
+                else begin
+                  Printf.fprintf stderr "This executable is only available in the following versions:\n";
+                  List.iter (fun c -> Printf.fprintf stderr " %s" c.compiler_name) versions;
+                  Printf.fprintf stderr "\n%!";
+                end;
+                exit 2
+              end
     in
-    Sys.argv.(0) <- filename;
-    (try execv Sys.argv.(0) argv with
+
+    begin
+      match c.compiler_kind with
+      | OPAM_COMPILER _ ->
+        let libdir = compiler_libdir c in
+	putenv "CAML_LD_LIBRARY_PATH"
+          (Printf.sprintf "%s/stublibs:%s/ocaml/stublibs" libdir libdir);
+        let manpath = try Sys.getenv "MANPATH" with Not_found -> "" in
+        putenv "MANPATH"
+          (Printf.sprintf "%s/man:%s" c.compiler_prefix manpath);
+
+      | _ -> ()
+    end;
+
+    (* Use ~/.ocp/manager-env.txt to add env variables to switch *)
+    begin try
+        File.iter_lines (fun line ->
+            let (switch, line) = OcpString.cut_at line ' ' in
+            let (var, value) = OcpString.cut_at line '=' in
+            if switch = c.compiler_name || switch = "*" then
+              putenv var value
+          ) (Filename.concat ocpdir "manager-env.txt")
+      with _ -> ()
+    end;
+
+    (* Use .ocp-env files to add env variables to switch *)
+    let env = ref [] in
+    let store_env filename = env := filename :: !env; None in
+    ignore (find_up [ ".ocp-env", store_env ] = None);
+    List.iter (fun filename ->
+        try
+          File.iter_lines (fun line ->
+              let (switch, line) = OcpString.cut_at line ' ' in
+              let (var, value) = OcpString.cut_at line '=' in
+              if switch = c.compiler_name || switch = "*" then
+                putenv var value
+            ) filename
+        with _ -> ()
+      ) !env;
+
+(*
+    let get_env () =
+      let list = ref [] in
+      StringMap.iter (fun var s ->
+          list := s :: !list;
+          Printf.eprintf "env %S\n%!" s;
+        ) !environ;
+      Array.of_list !list
+    in
+*)
+    argv.(0) <- filename;
+    (try execv argv.(0) argv with
        e ->
        Printf.fprintf stderr "Error \"%s\" executing %s\n%!"
-         (Printexc.to_string e) Sys.argv.(0);
+         (Printexc.to_string e) argv.(0);
        exit 2
     )
