@@ -103,7 +103,7 @@ let read_compilers () =
     with _ -> []
   in
   List.iter (fun line ->
-    let (comp, alias) = OcpString.cut_at line ' ' in
+    let (alias, comp) = OcpString.cut_at line ' ' in
     if comp <> "" && alias <> "" then
       add_compiler {
         compiler_name = "opam:" ^ alias;
